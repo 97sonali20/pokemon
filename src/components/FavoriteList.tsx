@@ -24,10 +24,8 @@ export default function FavoritesList({ search }: Props) {
   }, []);
 
   const handleUnfavorite = (name: string) => {
-    // Update local state immediately
     setPokemons((prev) => prev.filter((p) => p.name !== name));
 
-    // Update localStorage
     const updated = JSON.parse(localStorage.getItem('favorites') || '[]').filter(
       (fav: string) => fav !== name
     );
@@ -48,7 +46,7 @@ export default function FavoritesList({ search }: Props) {
             <PokemonCard
               key={pokemon.name}
               pokemon={pokemon}
-              onUnfavorite={handleUnfavorite} // ✅ pass callback
+              onUnfavorite={handleUnfavorite}
             />
           ))}
         </div>

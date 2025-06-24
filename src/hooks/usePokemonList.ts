@@ -2,19 +2,48 @@
 
 import { useEffect, useState } from 'react';
 import { getPokemonList, getPokemonByType } from '@/lib/api';
+import { Pokemon } from '@/types/pokemon';
+import { useDebounce } from './useDebounce';
 
-export default function usePokemonList(type: string, search: string) {
-    const [pokemons, setPokemons] = useState([]);
+interface UsePokemonListReturn {
+  pokemons: Pokemon[];
+  loading: boolean;
+  error: string | null;
+}
 
-    useEffect(() => {
-        const fetchPokemons = async () => {
-            const data = type
-                ? await getPokemonByType(type)
-                : await getPokemonList();
-            setPokemons(data);
-        };
-        fetchPokemons();
-    }, [type]);
+export default function usePokemonList(type: string, search: string): UsePokemonListReturn {
+  const [allPokemons, setAllPokemons] = useState<Pokemon[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  const debouncedSearch = useDebounce(search, 300);
 
-    return pokemons.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+  useEffect(() => {
+    const fetchPokemons = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = type
+          ? await getPokemonByType(type)
+          : await getPokemonList();
+        setAllPokemons(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch Pokemon');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchPokemons();
+  }, [type]);
+
+  const filteredPokemons = allPokemons.filter(p => 
+    p.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+  );
+
+  return {
+    pokemons: filteredPokemons,
+    loading,
+    error,
+  };
 }
